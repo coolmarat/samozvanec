@@ -123,16 +123,55 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              children: [
+                SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: (currentIndex + 1) / questions.length,
+                  backgroundColor: Colors.grey[200],
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                  minHeight: 10,
+                ),
+                SizedBox(height: 16),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class ResultsScreen extends StatelessWidget {
+class ResultsScreen extends StatefulWidget {
   final Map<String, int> answers;
 
   const ResultsScreen({super.key, required this.answers});
+
+  @override
+  _ResultsScreenState createState() => _ResultsScreenState();
+}
+
+class _ResultsScreenState extends State<ResultsScreen> {
+  Map<String, String> typeDescriptions = {};
+
+  @override
+  void initState() {
+    super.initState();
+    loadTypeDescriptions();
+  }
+
+  Future<void> loadTypeDescriptions() async {
+    final String jsonString = await rootBundle.loadString('assets/types.json');
+    final List<dynamic> jsonData = json.decode(jsonString);
+    
+    setState(() {
+      typeDescriptions = Map.fromEntries(
+        jsonData.map((item) => MapEntry(item['type'], item['description']))
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,10 +181,13 @@ class ResultsScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            for (var entry in answers.entries)
-              Text(
-                'Тип ${entry.key}: ${entry.value}',
-                style: TextStyle(fontSize: 18),
+            for (var entry in widget.answers.entries)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Text(
+                  '${typeDescriptions[entry.key] ?? "Тип ${entry.key}"}: ${entry.value}',
+                  style: TextStyle(fontSize: 18),
+                ),
               ),
             SizedBox(height: 20),
             ElevatedButton(
