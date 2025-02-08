@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -155,6 +156,7 @@ class ResultsScreen extends StatefulWidget {
 
 class _ResultsScreenState extends State<ResultsScreen> {
   Map<String, String> typeDescriptions = {};
+  List<String> typeOrder = [];
 
   @override
   void initState() {
@@ -165,44 +167,153 @@ class _ResultsScreenState extends State<ResultsScreen> {
   Future<void> loadTypeDescriptions() async {
     final String jsonString = await rootBundle.loadString('assets/types.json');
     final List<dynamic> jsonData = json.decode(jsonString);
-    
+
     setState(() {
       typeDescriptions = Map.fromEntries(
-        jsonData.map((item) => MapEntry(item['type'], item['description']))
-      );
+          jsonData.map((item) => MapEntry(item['type'], item['description'])));
+      typeOrder =
+          jsonData.map<String>((item) => item['type'] as String).toList();
     });
+  }
+
+  BarChartGroupData _generateBarGroup(
+    int x,
+    double value,
+    Color color,
+  ) {
+    return BarChartGroupData(
+      x: x,
+      barRods: [
+        BarChartRodData(
+          toY: value,
+          color: color,
+          width: 25,
+          borderRadius: BorderRadius.circular(4),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBarChart() {
+    final List<Color> barColors = [
+      Colors.blue[200]!,
+      Colors.green[200]!,
+      Colors.orange[200]!,
+      Colors.purple[200]!,
+      Colors.red[200]!,
+    ];
+
+    final orderedEntries = typeOrder
+        .map((type) => MapEntry(type, widget.answers[type] ?? 0))
+        .toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: 6,
+          titlesData: FlTitlesData(
+            show: true,
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final index = value.toInt();
+                  if (index >= 0 && index < orderedEntries.length) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        orderedEntries[index].key,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }
+                  return const Text('');
+                },
+                reservedSize: 30,
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                interval: 1,
+              ),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+          ),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: 1,
+          ),
+          borderData: FlBorderData(
+            show: true,
+            border: Border(
+              bottom: BorderSide(color: Colors.black, width: 1),
+              left: BorderSide(color: Colors.black, width: 1),
+            ),
+          ),
+          barGroups: List.generate(
+            orderedEntries.length,
+            (index) => _generateBarGroup(
+              index,
+              orderedEntries[index].value.toDouble(),
+              barColors[index % barColors.length],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Результаты')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (var entry in widget.answers.entries)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                child: Text(
-                  '${typeDescriptions[entry.key] ?? "Тип ${entry.key}"}: ${entry.value}',
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => QuestionsScreen(),
+      body: Column(
+        children: [
+          Expanded(
+            flex: 3,
+            child: _buildBarChart(),
+          ),
+          Expanded(
+            flex: 2,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ...typeOrder.map((type) => Text(
+                        '${typeDescriptions[type] ?? "Тип $type"}: ${widget.answers[type] ?? 0}',
+                        style: TextStyle(fontSize: 16),
+                      )),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuestionsScreen(),
+                        ),
+                        (route) => false, // Удаляет все предыдущие маршруты
+                      );
+                    },
+                    child: Text('Вернуться'),
                   ),
-                );
-              },
-              child: Text('Вернуться'),
+                ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
