@@ -82,39 +82,48 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text('Анкета')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                questions[currentIndex]['question']!,
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 24),
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  questions[currentIndex]['question']!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 24),
+                ),
               ),
-              SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => answerQuestion(true),
-                      child: Text('Да'),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => answerQuestion(false),
-                      child: Text('Нет'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => answerQuestion(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[100],
+                    ),
+                    child: Text('Да'),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => answerQuestion(false),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pink[50],
+                    ),
+                    child: Text('Нет'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -140,7 +149,14 @@ class ResultsScreen extends StatelessWidget {
               ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => QuestionsScreen(),
+                  ),
+                );
+              },
               child: Text('Вернуться'),
             ),
           ],
